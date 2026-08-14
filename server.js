@@ -24,6 +24,7 @@ db.run(`
     CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT,
+        orderDate TEXT,
         riderName TEXT,
         paymentMethod TEXT,
         distanceKm REAL,
@@ -37,10 +38,9 @@ db.run(`
     )
 `);
 
-// CONSTANTS
 const PETROL_PRICE = 113; // ₹113 / L
 const MILEAGE = 40;       // 40 km / L
-const FUEL_PER_KM = PETROL_PRICE / MILEAGE; // ~₹2.825/km
+const FUEL_PER_KM = PETROL_PRICE / MILEAGE;
 
 // Serve Web Pages
 app.get('/', (req, res) => {
@@ -74,15 +74,19 @@ app.post('/api/calculate-order', (req, res) => {
     const riderNetPay = remainingMargin * 0.65;
     const operatorNetProfit = remainingMargin * 0.35;
     const totalCustomerPay = storeBill + deliveryFee;
-    const timestamp = new Date().toLocaleTimeString();
+    
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString();
+    const orderDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
     const sql = `
-        INSERT INTO orders (timestamp, riderName, paymentMethod, distanceKm, storeBill, deliveryFee, totalCustomerPay, fuelReimbursement, riderNetPay, operatorNetProfit, settled)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        INSERT INTO orders (timestamp, orderDate, riderName, paymentMethod, distanceKm, storeBill, deliveryFee, totalCustomerPay, fuelReimbursement, riderNetPay, operatorNetProfit, settled)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     `;
 
     const params = [
         timestamp,
+        orderDate,
         riderName,
         paymentMethod,
         distanceKm,
@@ -102,6 +106,7 @@ app.post('/api/calculate-order', (req, res) => {
             order: {
                 id: this.lastID,
                 timestamp,
+                orderDate,
                 riderName,
                 paymentMethod,
                 distanceKm,
@@ -117,9 +122,27 @@ app.post('/api/calculate-order', (req, res) => {
     });
 });
 
-// 2. Fetch Orders
+// 2. Fetch Filtered Orders
 app.get('/api/admin/orders', (req, res) => {
-    db.all(`SELECT * FROM orders ORDER BY id DESC`, [], (err, rows) => {
+    const { rider, date } = req.query;
+    let sql = `SELECT * FROM orders WHERE 1=1`;
+    let params = [];
+
+    if (rider && rider !== 'ALL') {
+        sql += ` AND riderName = ?`;
+        params.push(rider);
+    }
+    if (date && date !== 'ALL') {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (date === 'TODAY') {
+            sql += ` AND orderDate = ?`;
+            params.push(todayStr);
+        }
+    }
+
+    sql += ` ORDER BY id DESC`;
+
+    db.all(sql, params, (err, rows) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }

@@ -2,87 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Town Express Delivery</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Town Delivery Order Entry</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f8; margin: 0; padding: 15px; }
+        .card { background: white; max-width: 450px; margin: 0 auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        h2 { color: #1a1a1a; margin-top: 0; text-align: center; }
+        label { font-weight: 600; display: block; margin-top: 12px; color: #333; }
+        input, select { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background-color: #007bff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; margin-top: 18px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .wa-btn { background-color: #25D366; display: none; margin-top: 10px; }
+        .wa-btn:hover { background-color: #128C7E; }
+        .result-box { margin-top: 20px; background: #eef7ff; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff; display: none; }
+        .result-box h3 { margin: 0 0 10px 0; font-size: 18px; }
+        .result-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 15px; }
+        .total-row { border-top: 1px dashed #bbb; padding-top: 6px; font-weight: bold; color: #007bff; }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold text-indigo-600 mb-4">Town Delivery Order</h2>
-        
-        <!-- Estimated Bill -->
-        <label class="block mb-1 text-sm font-medium text-gray-700">Estimated Store Bill (₹)</label>
-        <input type="number" id="storeBill" value="500" class="w-full p-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
+<body>
 
-        <!-- Distance -->
-        <label class="block mb-1 text-sm font-medium text-gray-700">Delivery Distance (in KM)</label>
-        <input type="number" id="distance" value="4" class="w-full p-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
+<div class="card">
+    <h2>🚚 Town Delivery</h2>
 
-        <!-- Payment Method Selection -->
-        <label class="block mb-1 text-sm font-medium text-gray-700">Payment Method</label>
-        <select id="paymentMethod" class="w-full p-2 border rounded-lg mb-4 bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="COD">Cash on Delivery (COD)</option>
-            <option value="UPI">Prepaid UPI</option>
-        </select>
+    <label for="riderName">Rider Name</label>
+    <select id="riderName">
+        <option value="Rider 1">Rider 1</option>
+        <option value="Rider 2">Rider 2</option>
+        <option value="Rider 3">Rider 3</option>
+    </select>
 
-        <!-- Rider Selection -->
-        <label class="block mb-1 text-sm font-medium text-gray-700">Assign Rider</label>
-        <select id="riderName" class="w-full p-2 border rounded-lg mb-6 bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="Rider 1">Rider 1</option>
-            <option value="Rider 2">Rider 2</option>
-        </select>
+    <label for="paymentMethod">Payment Method</label>
+    <select id="paymentMethod">
+        <option value="COD">Cash on Delivery (COD)</option>
+        <option value="UPI">Prepaid (UPI / Online)</option>
+    </select>
 
-        <button onclick="calculateOrder()" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
-            Place Order & Calculate Split
-        </button>
+    <label for="distanceKm">One-Way Distance (km)</label>
+    <input type="number" id="distanceKm" step="0.1" placeholder="e.g. 2.5">
 
-        <!-- Order Results Card -->
-        <div id="result" class="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-lg hidden">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-lg text-gray-800">Order Placed!</h3>
-                <span id="orderId" class="text-xs bg-indigo-200 text-indigo-800 font-bold px-2 py-1 rounded"></span>
-            </div>
-            
-            <p class="text-sm text-gray-600">Delivery Fee: <span id="deliveryFee" class="font-bold text-indigo-600"></span></p>
-            <p class="text-xl font-extrabold text-gray-900 mt-1">Total Pay: <span id="totalPay"></span></p>
+    <label for="storeBill">Store Items Bill (₹)</label>
+    <input type="number" id="storeBill" placeholder="e.g. 250">
 
-            <hr class="my-3 border-gray-300">
+    <button onclick="submitOrder()">Calculate & Record Order</button>
 
-            <h3 class="font-bold text-sm text-gray-700 mb-1">Operator Settlement Split</h3>
-            <p class="text-xs text-gray-600">Fuel Paid to Rider: <span id="fuelCost" class="font-medium text-red-600"></span></p>
-            <p class="text-xs text-gray-600">Rider Take-Home Pay: <span id="riderNet" class="font-medium text-green-600"></span></p>
-            <p class="text-xs text-gray-600 font-bold">Operator Net Profit: <span id="opProfit" class="text-blue-600"></span></p>
-        </div>
+    <div id="resultBox" class="result-box">
+        <h3>Order Receipt</h3>
+        <div class="result-row"><span>Store Bill:</span> <span id="rStoreBill">₹0</span></div>
+        <div class="result-row"><span>Delivery Fee:</span> <span id="rDeliveryFee">₹0</span></div>
+        <div class="result-row total-row"><span>Total Customer Pay:</span> <span id="rTotal">₹0</span></div>
     </div>
 
-    <script>
-        async function calculateOrder() {
-            const storeBill = Number(document.getElementById('storeBill').value);
-            const distanceKm = Number(document.getElementById('distance').value);
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const riderName = document.getElementById('riderName').value;
+    <button id="waBtn" class="wa-btn" onclick="sendWhatsAppReceipt()">📲 Share Bill on WhatsApp</button>
+</div>
 
-            try {
-                const response = await fetch('/api/calculate-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ distanceKm, storeBill, paymentMethod, riderName })
-                });
+<script>
+    let currentOrder = null;
 
-                const data = await response.json();
-                const order = data.order; // Read from order object
+    async function submitOrder() {
+        const riderName = document.getElementById('riderName').value;
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const distanceKm = document.getElementById('distanceKm').value;
+        const storeBill = document.getElementById('storeBill').value;
 
-                document.getElementById('orderId').innerText = 'Order #' + order.id;
-                document.getElementById('deliveryFee').innerText = '₹' + order.deliveryFee;
-                document.getElementById('totalPay').innerText = '₹' + order.totalCustomerPay;
-                document.getElementById('fuelCost').innerText = '₹' + order.fuelReimbursement;
-                document.getElementById('riderNet').innerText = '₹' + order.riderNetPay;
-                document.getElementById('opProfit').innerText = '₹' + order.operatorNetProfit;
-
-                document.getElementById('result').classList.remove('hidden');
-            } catch (error) {
-                alert('Error connecting to server! Make sure node server.js is running.');
-            }
+        if (!distanceKm || !storeBill) {
+            alert("Please enter distance and store bill!");
+            return;
         }
-    </script>
+
+        const response = await fetch('/api/calculate-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ riderName, paymentMethod, distanceKm, storeBill })
+        });
+
+        const data = await response.json();
+        currentOrder = data.order;
+
+        document.getElementById('rStoreBill').innerText = '₹' + currentOrder.storeBill;
+        document.getElementById('rDeliveryFee').innerText = '₹' + currentOrder.deliveryFee;
+        document.getElementById('rTotal').innerText = '₹' + currentOrder.totalCustomerPay;
+
+        document.getElementById('resultBox').style.display = 'block';
+        document.getElementById('waBtn').style.display = 'block';
+    }
+
+    function sendWhatsAppReceipt() {
+        if (!currentOrder) return;
+        const text = `*--- TOWN DELIVERY RECEIPT ---*\n` +
+                     `📦 Order #${currentOrder.id}\n` +
+                     `🛒 Store Items: ₹${currentOrder.storeBill}\n` +
+                     `🚚 Delivery Fee: ₹${currentOrder.deliveryFee}\n` +
+                     `-----------------------------\n` +
+                     `💰 *TOTAL PAYABLE: ₹${currentOrder.totalCustomerPay}*\n` +
+                     `💳 Payment Mode: ${currentOrder.paymentMethod}\n` +
+                     `-----------------------------\n` +
+                     `Thank you for using Town Delivery!`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+</script>
+
 </body>
 </html>
