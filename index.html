@@ -88,7 +88,17 @@
 <body>
 
 <div class="card">
-    <h3>⚡ Town Delivery</h3>
+    <h3>🛵 Town Delivery</h3>
+
+    <label>Select Rider Profile</label>
+    <select id="riderName">
+        <option value="Rider 1">Rider 1</option>
+        <option value="Rider 2">Rider 2</option>
+        <option value="Rider 3">Rider 3</option>
+    </select>
+
+    <label>Rider Security PIN</label>
+    <input type="password" id="riderPin" placeholder="Enter 4-digit PIN" maxlength="4">
 
     <label>Customer Mobile Number (Optional)</label>
     <input type="tel" id="customerPhone" placeholder="e.g. 9876543210">
@@ -103,13 +113,6 @@
     <select id="paymentMethod">
         <option value="COD">Cash on Delivery (COD)</option>
         <option value="UPI">Prepaid (UPI / Online)</option>
-    </select>
-
-    <label>Assign Rider</label>
-    <select id="riderName">
-        <option value="Rider 1">Rider 1</option>
-        <option value="Rider 2">Rider 2</option>
-        <option value="Rider 3">Rider 3</option>
     </select>
 
     <button class="btn-submit" onclick="submitOrder()">Place Order & Calculate Split</button>
@@ -134,13 +137,27 @@
 </div>
 
 <script>
+    // Rider Security PIN Registry
+    const riderPins = {
+        'Rider 1': '1111',
+        'Rider 2': '2222',
+        'Rider 3': '3333'
+    };
+
     let currentOrder = null;
 
     async function submitOrder() {
+        const riderName = document.getElementById('riderName').value;
+        const enteredPin = document.getElementById('riderPin').value;
         const storeBill = document.getElementById('storeBill').value;
         const distanceKm = document.getElementById('distanceKm').value;
         const paymentMethod = document.getElementById('paymentMethod').value;
-        const riderName = document.getElementById('riderName').value;
+
+        // Verify PIN
+        if (enteredPin !== riderPins[riderName]) {
+            alert(`Incorrect PIN for ${riderName}! Order not submitted.`);
+            return;
+        }
 
         if (!storeBill || !distanceKm) {
             alert('Please enter Store Bill and Distance!');
@@ -171,7 +188,7 @@
         
         let phone = document.getElementById('customerPhone').value.trim();
         if (phone && !phone.startsWith('91') && phone.length === 10) {
-            phone = '91' + phone; // Add India country code automatically
+            phone = '91' + phone;
         }
 
         const text = `*--- TOWN EXPRESS DELIVERY ---*\n` +
