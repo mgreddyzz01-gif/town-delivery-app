@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Settlement Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { 
@@ -32,15 +33,16 @@
         .filters select { padding: 10px; border-radius: 8px; background: #0f172a; border: 1px solid #1e293b; color: white; flex: 1; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .stat-card { background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #1e293b; border-left: 4px solid #6366f1; }
-        .stat-card h4 { margin: 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card h4 { margin: 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; }
         .stat-card p { margin: 6px 0 0 0; font-size: 22px; font-weight: bold; color: #f8fafc; }
         .action-card { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 14px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; color: #fbbf24; text-align: center; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
         th, td { border: 1px solid #1e293b; padding: 10px; text-align: center; }
         th { background-color: #0f172a; color: #818cf8; }
         td { background-color: #131b2e; color: #e2e8f0; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .btn-settle { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
+        .btn-export { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
         .btn-clear { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -96,14 +98,17 @@
 
     <div class="btn-group">
         <button class="btn-settle" onclick="settleOrders()">Mark Orders Settled</button>
+        <button class="btn-export" onclick="exportToCSV()">📥 Export Excel CSV</button>
         <button class="btn-clear" onclick="clearOrders()">Reset Ledger</button>
     </div>
 </div>
 
 <script>
+    let currentFetchedOrders = [];
+
     function checkPin() {
         const pin = document.getElementById('pinInput').value;
-        if (pin === '5910') { // Set your PIN here
+        if (pin === '8899') { // Set PIN here
             document.getElementById('passcodeOverlay').style.display = 'none';
             loadDashboard();
         } else {
@@ -116,13 +121,13 @@
         const date = document.getElementById('filterDate').value;
 
         const res = await fetch(`/api/admin/orders?rider=${rider}&date=${date}`);
-        const orders = await res.json();
+        currentFetchedOrders = await res.json();
 
         let codCash = 0, riderPay = 0, operatorProfit = 0;
         const tableBody = document.getElementById('ordersTable');
         tableBody.innerHTML = '';
 
-        orders.forEach(o => {
+        currentFetchedOrders.forEach(o => {
             if (o.paymentMethod === 'COD') codCash += o.totalCustomerPay;
             riderPay += (o.fuelReimbursement + o.riderNetPay);
             operatorProfit += o.operatorNetProfit;
@@ -153,6 +158,28 @@
         } else {
             actionBox.innerText = `✅ Accounts Balanced! No cash exchange needed.`;
         }
+    }
+
+    function exportToCSV() {
+        if (!currentFetchedOrders.length) {
+            alert("No orders to export!");
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Order ID,Date,Time,Rider,Payment Method,Distance (km),Store Bill (INR),Delivery Fee (INR),Customer Total (INR),Fuel Reimbursement (INR),Rider Net Pay (INR),Operator Net Profit (INR)\n";
+
+        currentFetchedOrders.forEach(o => {
+            csvContent += `${o.id},${o.orderDate},${o.timestamp},${o.riderName},${o.paymentMethod},${o.distanceKm},${o.storeBill},${o.deliveryFee},${o.totalCustomerPay},${o.fuelReimbursement},${o.riderNetPay},${o.operatorNetProfit}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `town_delivery_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     async function settleOrders() {
