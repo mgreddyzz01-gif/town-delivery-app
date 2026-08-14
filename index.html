@@ -3,101 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Town Delivery Order Entry</title>
+    <title>Town Delivery Order</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f8; margin: 0; padding: 15px; }
-        .card { background: white; max-width: 450px; margin: 0 auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        h2 { color: #1a1a1a; margin-top: 0; text-align: center; }
-        label { font-weight: 600; display: block; margin-top: 12px; color: #333; }
-        input, select { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 14px; background-color: #007bff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; margin-top: 18px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        .wa-btn { background-color: #25D366; display: none; margin-top: 10px; }
-        .wa-btn:hover { background-color: #128C7E; }
-        .result-box { margin-top: 20px; background: #eef7ff; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff; display: none; }
-        .result-box h3 { margin: 0 0 10px 0; font-size: 18px; }
-        .result-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 15px; }
-        .total-row { border-top: 1px dashed #bbb; padding-top: 6px; font-weight: bold; color: #007bff; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { 
+            background: #0b0f19; 
+            background-image: radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%);
+            color: #f1f5f9; 
+            margin: 0; 
+            padding: 24px 16px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+        }
+        .card { 
+            background: #131b2e; 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 16px; 
+            width: 100%; 
+            max-width: 420px; 
+            padding: 24px; 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); 
+        }
+        h3 { margin: 0 0 18px 0; color: #818cf8; text-align: center; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+        label { font-size: 13px; color: #94a3b8; margin-top: 14px; display: block; font-weight: 500; }
+        input, select { 
+            width: 100%; 
+            padding: 12px 14px; 
+            margin-top: 6px; 
+            background: #0f172a; 
+            border: 1px solid #1e293b; 
+            border-radius: 10px; 
+            color: #f8fafc; 
+            font-size: 15px; 
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
+        .btn-submit { 
+            width: 100%; 
+            padding: 14px; 
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            margin-top: 22px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+            transition: transform 0.1s ease;
+        }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-wa { 
+            width: 100%; 
+            padding: 13px; 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            margin-top: 14px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .result-box { 
+            background: #0f172a; 
+            border: 1px solid #1e293b; 
+            border-radius: 12px; 
+            padding: 18px; 
+            margin-top: 22px; 
+            display: none; 
+        }
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .badge { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .total-pay { font-size: 26px; font-weight: 800; color: #f8fafc; margin: 4px 0 14px 0; letter-spacing: -0.5px; }
+        .split-box { background: #182238; padding: 12px; border-radius: 8px; font-size: 13px; color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .split-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .split-row:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🚚 Town Delivery</h2>
+    <h3>⚡ Town Delivery</h3>
 
-    <label for="riderName">Rider Name</label>
+    <label>Estimated Store Bill (₹)</label>
+    <input type="number" id="storeBill" placeholder="e.g. 500">
+
+    <label>Delivery Distance (in KM)</label>
+    <input type="number" id="distanceKm" step="0.1" placeholder="e.g. 4">
+
+    <label>Payment Method</label>
+    <select id="paymentMethod">
+        <option value="COD">Cash on Delivery (COD)</option>
+        <option value="UPI">Prepaid (UPI / Online)</option>
+    </select>
+
+    <label>Assign Rider</label>
     <select id="riderName">
         <option value="Rider 1">Rider 1</option>
         <option value="Rider 2">Rider 2</option>
         <option value="Rider 3">Rider 3</option>
     </select>
 
-    <label for="paymentMethod">Payment Method</label>
-    <select id="paymentMethod">
-        <option value="COD">Cash on Delivery (COD)</option>
-        <option value="UPI">Prepaid (UPI / Online)</option>
-    </select>
-
-    <label for="distanceKm">One-Way Distance (km)</label>
-    <input type="number" id="distanceKm" step="0.1" placeholder="e.g. 2.5">
-
-    <label for="storeBill">Store Items Bill (₹)</label>
-    <input type="number" id="storeBill" placeholder="e.g. 250">
-
-    <button onclick="submitOrder()">Calculate & Record Order</button>
+    <button class="btn-submit" onclick="submitOrder()">Place Order & Calculate Split</button>
 
     <div id="resultBox" class="result-box">
-        <h3>Order Receipt</h3>
-        <div class="result-row"><span>Store Bill:</span> <span id="rStoreBill">₹0</span></div>
-        <div class="result-row"><span>Delivery Fee:</span> <span id="rDeliveryFee">₹0</span></div>
-        <div class="result-row total-row"><span>Total Customer Pay:</span> <span id="rTotal">₹0</span></div>
-    </div>
+        <div class="result-header">
+            <span style="font-weight:700; color:#38bdf8;">Order Confirmed!</span>
+            <span class="badge" id="orderId">Order #0</span>
+        </div>
+        <div style="font-size:13px; color:#94a3b8;">Delivery Fee: <span id="deliveryFee" style="color:#f8fafc; font-weight:600;">₹0</span></div>
+        <div class="total-pay">Total Pay: <span id="totalCustomerPay">₹0</span></div>
 
-    <button id="waBtn" class="wa-btn" onclick="sendWhatsAppReceipt()">📲 Share Bill on WhatsApp</button>
+        <div class="split-box">
+            <div style="font-weight:700; margin-bottom:8px; color:#818cf8;">Operator Split Breakdown</div>
+            <div class="split-row"><span>Fuel Reimbursement:</span> <span id="fuelReimbursement" style="color:#f87171; font-weight:600;">₹0</span></div>
+            <div class="split-row"><span>Rider Take-Home Pay:</span> <span id="riderNetPay" style="color:#4ade80; font-weight:600;">₹0</span></div>
+            <div class="split-row"><span>Operator Net Profit:</span> <span id="operatorNetProfit" style="color:#38bdf8; font-weight:600;">₹0</span></div>
+        </div>
+
+        <button class="btn-wa" onclick="sendWhatsAppReceipt()">📲 Share Receipt on WhatsApp</button>
+    </div>
 </div>
 
 <script>
     let currentOrder = null;
 
     async function submitOrder() {
-        const riderName = document.getElementById('riderName').value;
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const distanceKm = document.getElementById('distanceKm').value;
         const storeBill = document.getElementById('storeBill').value;
+        const distanceKm = document.getElementById('distanceKm').value;
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const riderName = document.getElementById('riderName').value;
 
-        if (!distanceKm || !storeBill) {
-            alert("Please enter distance and store bill!");
+        if (!storeBill || !distanceKm) {
+            alert('Please enter Store Bill and Distance!');
             return;
         }
 
-        const response = await fetch('/api/calculate-order', {
+        const res = await fetch('/api/calculate-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ riderName, paymentMethod, distanceKm, storeBill })
+            body: JSON.stringify({ storeBill, distanceKm, paymentMethod, riderName })
         });
 
-        const data = await response.json();
+        const data = await res.json();
         currentOrder = data.order;
 
-        document.getElementById('rStoreBill').innerText = '₹' + currentOrder.storeBill;
-        document.getElementById('rDeliveryFee').innerText = '₹' + currentOrder.deliveryFee;
-        document.getElementById('rTotal').innerText = '₹' + currentOrder.totalCustomerPay;
+        document.getElementById('orderId').innerText = 'Order #' + currentOrder.id;
+        document.getElementById('deliveryFee').innerText = '₹' + currentOrder.deliveryFee;
+        document.getElementById('totalCustomerPay').innerText = '₹' + currentOrder.totalCustomerPay;
+        document.getElementById('fuelReimbursement').innerText = '₹' + currentOrder.fuelReimbursement;
+        document.getElementById('riderNetPay').innerText = '₹' + currentOrder.riderNetPay;
+        document.getElementById('operatorNetProfit').innerText = '₹' + currentOrder.operatorNetProfit;
 
         document.getElementById('resultBox').style.display = 'block';
-        document.getElementById('waBtn').style.display = 'block';
     }
 
     function sendWhatsAppReceipt() {
         if (!currentOrder) return;
-        const text = `*--- TOWN DELIVERY RECEIPT ---*\n` +
-                     `📦 Order #${currentOrder.id}\n` +
-                     `🛒 Store Items: ₹${currentOrder.storeBill}\n` +
+        const text = `*--- TOWN EXPRESS DELIVERY ---*\n` +
+                     `📦 *Order #${currentOrder.id}*\n\n` +
+                     `🛒 Store Bill: ₹${currentOrder.storeBill}\n` +
                      `🚚 Delivery Fee: ₹${currentOrder.deliveryFee}\n` +
                      `-----------------------------\n` +
                      `💰 *TOTAL PAYABLE: ₹${currentOrder.totalCustomerPay}*\n` +
                      `💳 Payment Mode: ${currentOrder.paymentMethod}\n` +
                      `-----------------------------\n` +
-                     `Thank you for using Town Delivery!`;
+                     `Thank you for ordering with Town Express!`;
+        
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     }
 </script>

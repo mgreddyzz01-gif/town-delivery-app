@@ -5,40 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Settlement Dashboard</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f8; margin: 0; padding: 15px; }
-        .card { background: white; max-width: 800px; margin: 0 auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .passcode-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .passcode-box { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 300px; width: 100%; }
-        .passcode-box input { width: 100%; padding: 10px; margin: 10px 0; text-align: center; font-size: 20px; letter-spacing: 4px; border: 1px solid #ccc; border-radius: 8px; }
-        .passcode-box button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; }
-        .filters { display: flex; gap: 10px; margin-bottom: 15px; }
-        .filters select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex: 1; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #007bff; }
-        .stat-card h4 { margin: 0; font-size: 13px; color: #666; }
-        .stat-card p { margin: 5px 0 0 0; font-size: 20px; font-weight: bold; }
-        .action-card { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #856404; text-align: center; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { 
+            background: #0b0f19; 
+            background-image: radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%);
+            color: #f1f5f9; 
+            margin: 0; 
+            padding: 20px 15px; 
+            min-height: 100vh;
+        }
+        .card { 
+            background: #131b2e; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 24px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.08); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+        }
+        h2 { color: #818cf8; margin-top: 0; text-align: center; font-size: 22px; }
+        .passcode-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .passcode-box { background: #131b2e; padding: 30px; border-radius: 16px; text-align: center; max-width: 320px; width: 100%; border: 1px solid rgba(255,255,255,0.1); }
+        .passcode-box input { width: 100%; padding: 12px; margin: 15px 0; text-align: center; font-size: 22px; letter-spacing: 6px; background: #0f172a; border: 1px solid #1e293b; color: white; border-radius: 10px; }
+        .passcode-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .filters { display: flex; gap: 10px; margin-bottom: 18px; }
+        .filters select { padding: 10px; border-radius: 8px; background: #0f172a; border: 1px solid #1e293b; color: white; flex: 1; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #1e293b; border-left: 4px solid #6366f1; }
+        .stat-card h4 { margin: 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card p { margin: 6px 0 0 0; font-size: 22px; font-weight: bold; color: #f8fafc; }
+        .action-card { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 14px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; color: #fbbf24; text-align: center; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #007bff; color: white; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-settle { background: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; flex: 1; font-weight: bold; cursor: pointer; }
-        .btn-clear { background: #dc3545; color: white; border: none; padding: 10px; border-radius: 6px; flex: 1; font-weight: bold; cursor: pointer; }
+        th, td { border: 1px solid #1e293b; padding: 10px; text-align: center; }
+        th { background-color: #0f172a; color: #818cf8; }
+        td { background-color: #131b2e; color: #e2e8f0; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-settle { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
+        .btn-clear { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="passcodeOverlay" class="passcode-overlay">
     <div class="passcode-box">
-        <h3>🔒 Admin Access</h3>
-        <p style="font-size:12px; color:#666;">Enter 4-digit PIN (Default: 1234)</p>
-        <input type="password" id="pinInput" maxlength="4" placeholder="••••">
+        <h3 style="margin-top:0; color:#818cf8;">🔒 Admin Control</h3>
+        <p style="font-size:12px; color:#94a3b8; margin-bottom:0;">Enter Security Passcode</p>
+        <input type="password" id="pinInput" maxlength="6" placeholder="••••">
         <button onclick="checkPin()">Unlock Dashboard</button>
     </div>
 </div>
 
 <div class="card">
-    <h2>📊 Admin Settlement Dashboard</h2>
+    <h2>📊 Settlement Dashboard</h2>
 
     <div class="filters">
         <select id="filterRider" onchange="loadDashboard()">
@@ -55,8 +73,8 @@
 
     <div class="stats-grid">
         <div class="stat-card"><h4>COD Cash Collected</h4><p id="statCod">₹0</p></div>
-        <div class="stat-card"><h4>Total Rider Payout</h4><p id="statRiderPay">₹0</p></div>
-        <div class="stat-card"><h4>Operator Net Profit</h4><p id="statOperatorProfit">₹0</p></div>
+        <div class="stat-card" style="border-left-color: #10b981;"><h4>Rider Total Payout</h4><p id="statRiderPay">₹0</p></div>
+        <div class="stat-card" style="border-left-color: #38bdf8;"><h4>Operator Net Profit</h4><p id="statOperatorProfit">₹0</p></div>
     </div>
 
     <div id="actionCard" class="action-card">EOD Action: Loading...</div>
@@ -85,7 +103,7 @@
 <script>
     function checkPin() {
         const pin = document.getElementById('pinInput').value;
-        if (pin === '9818') { // Default PIN for admin access
+        if (pin === '5910') { // Set your PIN here
             document.getElementById('passcodeOverlay').style.display = 'none';
             loadDashboard();
         } else {
