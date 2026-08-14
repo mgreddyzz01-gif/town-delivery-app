@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Operator Settlement Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-6">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-indigo-400">Operator Dashboard</h1>
+                <p class="text-gray-400 text-sm">Daily Rider Cash & Settlement Tracker</p>
+            </div>
+            <div class="space-x-2">
+                <button onclick="clearDatabase()" class="bg-red-700 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition">
+                    🗑️ Reset Data
+                </button>
+                <button onclick="fetchOrders()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition">
+                    🔄 Refresh Orders
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase font-bold">Total COD Cash Collected</p>
+                <h2 id="totalCodCash" class="text-2xl font-bold text-yellow-400 mt-1">₹0</h2>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase font-bold">Rider Payout (Fuel + Pay)</p>
+                <h2 id="totalRiderPayout" class="text-2xl font-bold text-green-400 mt-1">₹0.00</h2>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase font-bold">Operator Net Profit</p>
+                <h2 id="totalOpProfit" class="text-2xl font-bold text-blue-400 mt-1">₹0.00</h2>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <p class="text-gray-400 text-xs uppercase font-bold">Final EOD Action</p>
+                <h2 id="eodAction" class="text-lg font-extrabold text-purple-400 mt-1">Balanced (₹0)</h2>
+            </div>
+        </div>
+
+        <!-- Order Ledger -->
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-100">Today's Order Ledger</h2>
+                <button onclick="settleRider()" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-bold transition">
+                    ✅ Settle Rider Balance
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-700 text-gray-400 text-sm">
+                            <th class="p-3">#</th>
+                            <th class="p-3">Time</th>
+                            <th class="p-3">Rider</th>
+                            <th class="p-3">Payment</th>
+                            <th class="p-3">Cust Pay</th>
+                            <th class="p-3">Fuel Cost</th>
+                            <th class="p-3">Rider Net</th>
+                            <th class="p-3">Op Profit</th>
+                            <th class="p-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTable" class="divide-y divide-gray-700 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/admin/orders');
+                const orders = await response.json();
+
+                const tableBody = document.getElementById('orderTable');
+                tableBody.innerHTML = '';
+
+                let totalCodCash = 0;
+                let totalRiderPayout = 0;
+                let totalOpProfit = 0;
+
+                if (!orders || orders.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-500">No orders placed today.</td></tr>`;
+                    resetCards();
+                    return;
+                }
+
+                orders.forEach(order => {
+                    const id = order.id;
+                    const time = order.timestamp || 'N/A';
+                    const rider = order.riderName || 'Rider 1';
+                    const payMethod = order.paymentMethod || 'COD';
+
+                    // Parse numbers safely to prevent NaN
+                    const custPay = parseFloat(order.totalCustomerPay) || 0;
+                    const fuel = parseFloat(order.fuelReimbursement) || 0;
+                    const riderNet = parseFloat(order.riderNetPay) || 0;
+                    const opProfit = parseFloat(order.operatorNetProfit) || 0;
+                    const isSettled = Number(order.settled) === 1;
+
+                    // Calculate totals ONLY for PENDING orders
+                    if (!isSettled) {
+                        if (payMethod === 'COD') {
+                            totalCodCash += custPay;
+                        }
+                        totalRiderPayout += (fuel + riderNet);
+                        totalOpProfit += opProfit;
+                    }
+
+                    const statusBadge = isSettled 
+                        ? `<span class="bg-green-900 text-green-300 px-2 py-1 rounded text-xs font-bold">SETTLED</span>`
+                        : `<span class="bg-yellow-900 text-yellow-300 px-2 py-1 rounded text-xs font-bold">PENDING</span>`;
+
+                    const row = `
+                        <tr class="hover:bg-gray-750">
+                            <td class="p-3 font-mono">#${id}</td>
+                            <td class="p-3 text-gray-400">${time}</td>
+                            <td class="p-3 font-medium">${rider}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded ${payMethod === 'COD' ? 'bg-yellow-800 text-yellow-200' : 'bg-blue-800 text-blue-200'} text-xs font-bold">${payMethod}</span></td>
+                            <td class="p-3 font-bold">₹${custPay}</td>
+                            <td class="p-3 text-red-400">₹${fuel.toFixed(2)}</td>
+                            <td class="p-3 text-green-400">₹${riderNet.toFixed(2)}</td>
+                            <td class="p-3 text-blue-400 font-bold">₹${opProfit.toFixed(2)}</td>
+                            <td class="p-3">${statusBadge}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+
+                // Update UI Summary Cards
+                document.getElementById('totalCodCash').innerText = `₹${totalCodCash}`;
+                document.getElementById('totalRiderPayout').innerText = `₹${totalRiderPayout.toFixed(2)}`;
+                document.getElementById('totalOpProfit').innerText = `₹${totalOpProfit.toFixed(2)}`;
+
+                // EOD Action Calculation
+                const balanceDifference = totalCodCash - totalRiderPayout;
+                const eodCard = document.getElementById('eodAction');
+
+                if (balanceDifference > 0) {
+                    eodCard.innerText = `Collect ₹${balanceDifference.toFixed(2)} Cash from Rider`;
+                    eodCard.className = "text-lg font-extrabold text-green-400 mt-1";
+                } else if (balanceDifference < 0) {
+                    eodCard.innerText = `Pay ₹${Math.abs(balanceDifference).toFixed(2)} UPI to Rider`;
+                    eodCard.className = "text-lg font-extrabold text-yellow-400 mt-1";
+                } else {
+                    eodCard.innerText = `Balanced (₹0 Owed)`;
+                    eodCard.className = "text-lg font-extrabold text-gray-400 mt-1";
+                }
+
+            } catch (err) {
+                console.error("Fetch Error:", err);
+            }
+        }
+
+        function resetCards() {
+            document.getElementById('totalCodCash').innerText = `₹0`;
+            document.getElementById('totalRiderPayout').innerText = `₹0.00`;
+            document.getElementById('totalOpProfit').innerText = `₹0.00`;
+            document.getElementById('eodAction').innerText = `Balanced (₹0)`;
+        }
+
+        async function settleRider() {
+            const res = await fetch('/api/admin/settle', { method: 'POST' });
+            const data = await res.json();
+            alert(data.message);
+            fetchOrders();
+        }
+
+        async function clearDatabase() {
+            if (confirm("Are you sure you want to clear all order records?")) {
+                await fetch('/api/admin/clear', { method: 'POST' });
+                fetchOrders();
+            }
+        }
+
+        // Auto-fetch on page load
+        fetchOrders();
+    </script>
+</body>
+</html>
