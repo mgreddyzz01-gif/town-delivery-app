@@ -3,215 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Settlement Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <title>Admin Settlement & Order Dashboard</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { 
-            background: #0b0f19; 
-            background-image: radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%);
-            color: #f1f5f9; 
-            margin: 0; 
-            padding: 20px 15px; 
-            min-height: 100vh;
-        }
-        .card { 
-            background: #131b2e; 
-            max-width: 850px; 
-            margin: 0 auto; 
-            padding: 24px; 
-            border-radius: 16px; 
-            border: 1px solid rgba(255,255,255,0.08); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
-        }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h2 { color: #818cf8; margin: 0; font-size: 22px; }
-        .btn-refresh { background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #a5b4fc; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-        .btn-refresh:hover { background: rgba(99, 102, 241, 0.35); }
-        .passcode-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .passcode-box { background: #131b2e; padding: 30px; border-radius: 16px; text-align: center; max-width: 320px; width: 100%; border: 1px solid rgba(255,255,255,0.1); }
-        .passcode-box input { width: 100%; padding: 12px; margin: 15px 0; text-align: center; font-size: 22px; letter-spacing: 6px; background: #0f172a; border: 1px solid #1e293b; color: white; border-radius: 10px; }
-        .passcode-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .filters { display: flex; gap: 10px; margin-bottom: 18px; }
-        .filters select { padding: 10px; border-radius: 8px; background: #0f172a; border: 1px solid #1e293b; color: white; flex: 1; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #1e293b; border-left: 4px solid #6366f1; }
-        .stat-card h4 { margin: 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; }
-        .stat-card p { margin: 6px 0 0 0; font-size: 22px; font-weight: bold; color: #f8fafc; }
-        .action-card { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 14px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; color: #fbbf24; text-align: center; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { border: 1px solid #1e293b; padding: 10px; text-align: center; }
-        th { background-color: #0f172a; color: #818cf8; }
-        td { background-color: #131b2e; color: #e2e8f0; }
-        .badge-status { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
-        .status-settled { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
-        .status-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-        .btn-settle { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
-        .btn-export { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
-        .btn-clear { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 12px; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; }
+        body { background: #0f172a; color: #f8fafc; padding: 20px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; max-width: 900px; margin: 0 auto; }
+        h2 { margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-size: 13px; text-transform: uppercase; }
+        select { background: #0f172a; color: #fff; border: 1px solid #475569; padding: 6px 10px; border-radius: 6px; }
+        .btn-assign { background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+        .pending { background: rgba(234, 179, 8, 0.2); color: #fde047; }
+        .assigned { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
     </style>
 </head>
 <body>
 
-<div id="passcodeOverlay" class="passcode-overlay">
-    <div class="passcode-box">
-        <h3 style="margin-top:0; color:#818cf8;">🔒 Admin Control</h3>
-        <p style="font-size:12px; color:#94a3b8; margin-bottom:0;">Enter Security Passcode</p>
-        <input type="password" id="pinInput" maxlength="6" placeholder="••••">
-        <button onclick="checkPin()">Unlock Dashboard</button>
-    </div>
-</div>
-
 <div class="card">
-    <div class="header-bar">
-        <h2>📊 Settlement Dashboard</h2>
-        <button class="btn-refresh" onclick="loadDashboard()">🔄 Refresh Data</button>
-    </div>
-
-    <div class="filters">
-        <select id="filterRider" onchange="loadDashboard()">
-            <option value="ALL">All Riders</option>
-            <option value="Rider 1">Rider 1</option>
-            <option value="Rider 2">Rider 2</option>
-            <option value="Rider 3">Rider 3</option>
-        </select>
-        <select id="filterDate" onchange="loadDashboard()">
-            <option value="ALL">All Time</option>
-            <option value="TODAY">Today Only</option>
-        </select>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><h4>COD Cash Collected</h4><p id="statCod">₹0</p></div>
-        <div class="stat-card" style="border-left-color: #10b981;"><h4>Rider Total Payout</h4><p id="statRiderPay">₹0</p></div>
-        <div class="stat-card" style="border-left-color: #38bdf8;"><h4>Operator Net Profit</h4><p id="statOperatorProfit">₹0</p></div>
-    </div>
-
-    <div id="actionCard" class="action-card">EOD Action: Loading...</div>
+    <h2>📊 Order Assignment & Settlement Dashboard <button onclick="loadOrders()" style="font-size:12px; padding:6px 12px; cursor:pointer;">🔄 Refresh</button></h2>
 
     <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Status</th>
-                <th>Rider</th>
-                <th>Mode</th>
-                <th>Bill</th>
-                <th>Fee</th>
-                <th>Rider Pay</th>
-                <th>Operator</th>
+                <th>Customer & Items</th>
+                <th>Assigned Rider</th>
+                <th>Action</th>
             </tr>
         </thead>
-        <tbody id="ordersTable"></tbody>
+        <tbody id="ordersTable">
+            <!-- Orders dynamically load here -->
+        </tbody>
     </table>
-
-    <div class="btn-group">
-        <button class="btn-settle" onclick="settleOrders()">Mark Orders Settled</button>
-        <button class="btn-export" onclick="exportToCSV()">📥 Export Excel CSV</button>
-        <button class="btn-clear" onclick="clearOrders()">Reset Ledger</button>
-    </div>
 </div>
 
 <script>
-    let currentFetchedOrders = [];
+    async function loadOrders() {
+        const res = await fetch('/api/orders');
+        const orders = await res.json();
+        const tbody = document.getElementById('ordersTable');
+        tbody.innerHTML = '';
 
-    function checkPin() {
-        const pin = document.getElementById('pinInput').value;
-        if (pin === '5910') { // Your Admin PIN
-            document.getElementById('passcodeOverlay').style.display = 'none';
-            loadDashboard();
-        } else {
-            alert('Incorrect Passcode!');
-        }
-    }
-
-    async function loadDashboard() {
-        const rider = document.getElementById('filterRider').value;
-        const date = document.getElementById('filterDate').value;
-
-        const res = await fetch(`/api/admin/orders?rider=${rider}&date=${date}`);
-        currentFetchedOrders = await res.json();
-
-        let codCash = 0, riderPay = 0, operatorProfit = 0;
-        const tableBody = document.getElementById('ordersTable');
-        tableBody.innerHTML = '';
-
-        currentFetchedOrders.forEach(o => {
-            if (o.paymentMethod === 'COD') codCash += o.totalCustomerPay;
-            riderPay += (o.fuelReimbursement + o.riderNetPay);
-            operatorProfit += o.operatorNetProfit;
-
-            const statusTag = o.settled 
-                ? `<span class="badge-status status-settled">SETTLED</span>` 
-                : `<span class="badge-status status-pending">PENDING</span>`;
-
-            tableBody.innerHTML += `
-                <tr>
-                    <td>#${o.id}</td>
-                    <td>${statusTag}</td>
-                    <td>${o.riderName}</td>
-                    <td>${o.paymentMethod}</td>
-                    <td>₹${o.storeBill}</td>
-                    <td>₹${o.deliveryFee}</td>
-                    <td>₹${(o.fuelReimbursement + o.riderNetPay).toFixed(1)}</td>
-                    <td>₹${o.operatorNetProfit}</td>
-                </tr>
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>#${order.id}</td>
+                <td><span class="status-badge ${order.status.toLowerCase()}">${order.status}</span></td>
+                <td>
+                    <strong>${order.name || 'Walk-in'}</strong> (${order.phone || 'N/A'})<br>
+                    <small style="color:#94a3b8">${order.items || 'General Delivery'}</small>
+                </td>
+                <td>
+                    <select id="rider-select-${order.id}">
+                        <option value="Rider 1" ${order.rider === 'Rider 1' ? 'selected' : ''}>Rider 1</option>
+                        <option value="Rider 2" ${order.rider === 'Rider 2' ? 'selected' : ''}>Rider 2</option>
+                        <option value="Rider 3" ${order.rider === 'Rider 3' ? 'selected' : ''}>Rider 3</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="btn-assign" onclick="assignRider(${order.id})">Assign Rider</button>
+                </td>
             `;
+            tbody.appendChild(row);
         });
-
-        document.getElementById('statCod').innerText = '₹' + codCash;
-        document.getElementById('statRiderPay').innerText = '₹' + riderPay.toFixed(1);
-        document.getElementById('statOperatorProfit').innerText = '₹' + operatorProfit.toFixed(1);
-
-        const netDifference = codCash - riderPay;
-        const actionBox = document.getElementById('actionCard');
-        if (netDifference > 0) {
-            actionBox.innerText = `💵 Collect ₹${netDifference.toFixed(1)} cash from Rider.`;
-        } else if (netDifference < 0) {
-            actionBox.innerText = `💸 Pay ₹${Math.abs(netDifference).toFixed(1)} to Rider.`;
-        } else {
-            actionBox.innerText = `✅ Accounts Balanced! No cash exchange needed.`;
-        }
     }
 
-    function exportToCSV() {
-        if (!currentFetchedOrders.length) {
-            alert("No orders to export!");
-            return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Order ID,Status,Date,Time,Rider,Payment Method,Distance (km),Store Bill (INR),Delivery Fee (INR),Customer Total (INR),Fuel Reimbursement (INR),Rider Net Pay (INR),Operator Net Profit (INR)\n";
-
-        currentFetchedOrders.forEach(o => {
-            const statusStr = o.settled ? "SETTLED" : "PENDING";
-            csvContent += `${o.id},${statusStr},${o.orderDate},${o.timestamp},${o.riderName},${o.paymentMethod},${o.distanceKm},${o.storeBill},${o.deliveryFee},${o.totalCustomerPay},${o.fuelReimbursement},${o.riderNetPay},${o.operatorNetProfit}\n`;
+    async function assignRider(orderId) {
+        const rider = document.getElementById(`rider-select-${orderId}`).value;
+        await fetch(`/api/orders/${orderId}/assign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rider })
         });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `town_delivery_report_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        alert(`Order #${orderId} assigned to ${rider}`);
+        loadOrders();
     }
 
-    async function settleOrders() {
-        if (confirm("Mark pending orders as settled?")) {
-            await fetch('/api/admin/settle', { method: 'POST' });
-            loadDashboard();
-        }
-    }
-
-    async function clearOrders() {
-        if (confirm("Are you sure you want to clear ALL order data?")) {
-            await fetch('/api/admin/clear', { method: 'POST' });
-            loadDashboard();
-        }
-    }
+    loadOrders();
 </script>
-
-</body>
-</html>
