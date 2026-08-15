@@ -29,7 +29,7 @@
         <button onclick="fetchAssignedOrders()" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer;">🔄 Refresh</button>
     </div>
 
-    <!-- Rider Selector Dropdown -->
+    <!-- Rider Filter Dropdown -->
     <div class="card">
         <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 6px;">SELECT YOUR RIDER PROFILE:</label>
         <select id="riderFilter" onchange="fetchAssignedOrders()">
@@ -54,7 +54,6 @@
             const orders = await res.json();
             const container = document.getElementById('assignedOrdersList');
             
-            // Filter orders assigned to the active selected rider
             const activeOrders = orders.filter(o => {
                 if (o.status !== 'Assigned') return false;
                 if (selectedRider === 'All Riders') return true;
@@ -81,9 +80,11 @@
                     <p style="margin:0 0 8px 0; font-size:13px; color:#cbd5e1;"><strong>Items:</strong> ${order.items}</p>
 
                     <div class="split-card">
-                        📍 <strong>Distance from ${order.selectedStore}:</strong> ${order.distanceKm} KM<br>
-                        💵 <strong>Collect Delivery Fee:</strong> ₹${order.deliveryFee} ${order.paymentMethod === 'Online' ? '(Paid Online)' : '(Collect Cash)'}<br>
-                        💰 <strong>Rider Payout:</strong> ₹${order.riderPayout}
+                        📍 <strong>Distance:</strong> ${order.distanceKm} KM<br>
+                        🛒 <strong>Store Bill:</strong> ₹${order.itemTotal || 0}<br>
+                        🚚 <strong>Delivery Fee:</strong> ₹${order.deliveryFee}<br>
+                        💵 <strong style="color:#fde047;">TOTAL TO COLLECT: ₹${order.grandTotal || order.deliveryFee}</strong> ${order.paymentMethod === 'Online' ? '(Paid Online)' : '(Collect Cash)'}<br>
+                        💰 <strong>Rider Earnings:</strong> ₹${order.riderPayout}
                     </div>
 
                     ${order.storeMapsUrl ? `<a href="${order.storeMapsUrl}" target="_blank" class="btn btn-store">🏬 Open Pickup Store Location</a>` : ''}
@@ -97,7 +98,7 @@
     }
 
     async function markDelivered(orderId) {
-        alert(`Order #${orderId} marked as delivered!`);
+        alert(`Order #${orderId} delivered!`);
         fetchAssignedOrders();
     }
 

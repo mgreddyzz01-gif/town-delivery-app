@@ -9,7 +9,7 @@ app.use(express.static(__dirname));
 let orders = [];
 let nextOrderId = 101;
 
-// Exact Fixed Store Coordinates for Karatagi Market Area
+// Fixed Store Coordinates for Karatagi Market Area
 const STORES = {
     "R mart": { lat: 15.6570, lng: 76.8090 },
     "VA mart": { lat: 15.6582, lng: 76.8095 },
@@ -18,7 +18,7 @@ const STORES = {
     "Sneha book house": { lat: 15.6565, lng: 76.8085 }
 };
 
-// Calculate Haversine distance with local town safeguard
+// Calculate Haversine distance with local town boundary safeguard
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 1.3;
     const R = 6371; // Earth radius in KM
@@ -30,7 +30,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     let dist = parseFloat((R * c).toFixed(1));
 
-    // Safeguard: If phone IP/GPS drops outside Karatagi town boundary (> 3.5 KM), fix to 1.3 KM
+    // Boundary safeguard: default to 1.3 KM if distance exceeds local town limits (> 3.5 KM)
     if (dist > 3.5 || isNaN(dist) || dist <= 0) {
         dist = 1.3;
     }
@@ -67,6 +67,8 @@ app.post('/api/customer/order', (req, res) => {
         deliveryFee: 0,
         operatorFee: 0,
         riderPayout: 0,
+        itemTotal: 0,
+        grandTotal: 0,
         status: 'Pending',
         rider: 'Unassigned'
     };
@@ -77,7 +79,7 @@ app.post('/api/customer/order', (req, res) => {
 
 app.get('/api/orders', (req, res) => res.json(orders));
 
-// Admin selects store & assigns rider
+// Admin selects store, inputs store bill, and assigns rider
 app.post('/api/orders/:id/assign', (req, res) => {
     const orderId = parseInt(req.params.id);
     const order = orders.find(o => o.id === orderId);
@@ -86,11 +88,12 @@ app.post('/api/orders/:id/assign', (req, res) => {
         const selectedStoreName = req.body.store;
         const storeInfo = STORES[selectedStoreName] || STORES["R mart"];
         
-        // Recalculate distance using store coordinates and safeguard
         const distance = calculateDistance(storeInfo.lat, storeInfo.lng, order.lat, order.lng);
         const deliveryFee = Math.max(20, Math.round(20 + (distance * 10)));
         const operatorFee = Math.round(deliveryFee * 0.20);
         const riderPayout = deliveryFee - operatorFee;
+        const itemTotal = parseFloat(req.body.itemTotal) || order.itemTotal || 0;
+        const grandTotal = itemTotal + deliveryFee;
 
         order.selectedStore = selectedStoreName;
         order.storeMapsUrl = `https://www.google.com/maps/search/?api=1&query=${storeInfo.lat},${storeInfo.lng}`;
@@ -99,6 +102,8 @@ app.post('/api/orders/:id/assign', (req, res) => {
         order.deliveryFee = deliveryFee;
         order.operatorFee = operatorFee;
         order.riderPayout = riderPayout;
+        order.itemTotal = itemTotal;
+        order.grandTotal = grandTotal;
         order.status = 'Assigned';
 
         return res.json({ success: true, order });
