@@ -8,12 +8,16 @@
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #0f172a; color: #f8fafc; padding: 20px; }
         .card { background: #1e293b; border-radius: 12px; padding: 24px; max-width: 1100px; margin: 0 auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; text-align: center; }
+        .stat-box h4 { margin: 0; color: #94a3b8; font-size: 12px; text-transform: uppercase; }
+        .stat-box p { margin: 6px 0 0 0; font-size: 20px; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; font-size: 13px; }
         th { color: #94a3b8; text-transform: uppercase; }
         select { background: #0f172a; color: #fff; border: 1px solid #475569; padding: 6px; border-radius: 6px; font-size: 12px; }
         .btn-assign { background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-settle { background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .btn-settle { background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 4px; }
         .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
         .pending { background: rgba(234, 179, 8, 0.2); color: #fde047; }
         .assigned { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
@@ -36,7 +40,31 @@
 </div>
 
 <div class="card" id="dashboardContent" style="display: none;">
-    <h2>📊 Order Assignment & Settlement Dashboard <button onclick="loadOrders()" style="font-size:12px; padding:6px 12px; cursor:pointer;">🔄 Refresh</button></h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2>📊 Order Assignment & Settlement Dashboard</h2>
+        <button onclick="loadOrders()" style="font-size:12px; padding:6px 12px; cursor:pointer;">🔄 Refresh</button>
+    </div>
+
+    <!-- Settlement Summary Cards -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <h4>💵 Cash (COD) Total</h4>
+            <p style="color:#f97316;" id="totalCod">₹0</p>
+        </div>
+        <div class="stat-box">
+            <h4>💳 Online Pay Total</h4>
+            <p style="color:#38bdf8;" id="totalOnline">₹0</p>
+        </div>
+        <div class="stat-box">
+            <h4>💰 Operator Profit</h4>
+            <p style="color:#34d399;" id="totalProfit">₹0</p>
+        </div>
+        <div class="stat-box">
+            <h4>✅ Settled Amount</h4>
+            <p style="color:#a7f3d0;" id="totalSettled">₹0</p>
+        </div>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -73,12 +101,33 @@
         const tbody = document.getElementById('ordersTable');
         tbody.innerHTML = '';
 
+        let totalCod = 0;
+        let totalOnline = 0;
+        let totalProfit = 0;
+        let totalSettled = 0;
+
         orders.forEach(order => {
+            const fee = order.deliveryFee || 0;
+            const profit = order.operatorFee || 0;
+
+            if (order.paymentMethod === 'Online') {
+                totalOnline += fee;
+            } else {
+                totalCod += fee;
+            }
+            totalProfit += profit;
+            if (order.settlementStatus === 'Settled') {
+                totalSettled += fee;
+            }
+
             const mapBtn = order.mapsUrl ? `<br><a href="${order.mapsUrl}" target="_blank" style="color:#38bdf8;">📍 Customer GPS</a>` : '';
             const payBadge = order.paymentMethod === 'Online' ? `<span class="pay-online">ONLINE</span>` : `<span class="pay-cod">COD</span>`;
-            const settlementDisplay = order.settlementStatus === 'Settled' 
-                ? `<span class="settled">✅ Settled</span>` 
-                : `<span class="unsettled">❌ Unsettled</span> <button class="btn-settle" onclick="toggleSettlement(${order.id}, 'Settled')">Mark Settled</button>`;
+            
+            const isSettled = order.settlementStatus === 'Settled';
+            const nextStatus = isSettled ? 'Unsettled' : 'Settled';
+            const settlementDisplay = isSettled 
+                ? `<span class="settled">✅ Settled</span> <button class="btn-settle" style="background:#475569;" onclick="toggleSettlement(${order.id}, '${nextStatus}')">Undo</button>`
+                : `<span class="unsettled">❌ Unsettled</span> <button class="btn-settle" onclick="toggleSettlement(${order.id}, '${nextStatus}')">Settle</button>`;
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -112,6 +161,12 @@
             `;
             tbody.appendChild(row);
         });
+
+        // Update Financial Summary Cards
+        document.getElementById('totalCod').innerText = `₹${totalCod}`;
+        document.getElementById('totalOnline').innerText = `₹${totalOnline}`;
+        document.getElementById('totalProfit').innerText = `₹${totalProfit}`;
+        document.getElementById('totalSettled').innerText = `₹${totalSettled}`;
     }
 
     async function assignRider(orderId) {

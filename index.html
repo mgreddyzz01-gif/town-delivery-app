@@ -18,14 +18,26 @@
         .pay-tag { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .tag-cod { background: #ea580c; color: #fff; }
         .tag-online { background: #0284c7; color: #fff; }
+        select { background: #1e293b; color: #fff; border: 1px solid #475569; padding: 8px 12px; border-radius: 8px; font-weight: bold; width: 100%; margin-bottom: 16px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
         <h2>🛵 Rider Portal</h2>
         <button onclick="fetchAssignedOrders()" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer;">🔄 Refresh</button>
+    </div>
+
+    <!-- Rider Selector Dropdown -->
+    <div class="card">
+        <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 6px;">SELECT YOUR RIDER PROFILE:</label>
+        <select id="riderFilter" onchange="fetchAssignedOrders()">
+            <option value="All Riders">-- View All Riders --</option>
+            <option value="Rider 1" selected>Rider 1</option>
+            <option value="Rider 2">Rider 2</option>
+            <option value="Rider 3">Rider 3</option>
+        </select>
     </div>
 
     <div class="card">
@@ -37,13 +49,20 @@
 <script>
     async function fetchAssignedOrders() {
         try {
+            const selectedRider = document.getElementById('riderFilter').value;
             const res = await fetch('/api/orders');
             const orders = await res.json();
             const container = document.getElementById('assignedOrdersList');
-            const activeOrders = orders.filter(o => o.status === 'Assigned');
+            
+            // Filter orders assigned to the active selected rider
+            const activeOrders = orders.filter(o => {
+                if (o.status !== 'Assigned') return false;
+                if (selectedRider === 'All Riders') return true;
+                return o.rider === selectedRider;
+            });
 
             if (activeOrders.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8; font-size:14px; text-align:center;">No assigned orders currently.</p>';
+                container.innerHTML = `<p style="color:#94a3b8; font-size:14px; text-align:center;">No assigned orders found for ${selectedRider}.</p>`;
                 return;
             }
 
@@ -51,7 +70,10 @@
                 <div class="order-box">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong>Order #${order.id}</strong>
-                        <span class="pay-tag ${order.paymentMethod === 'Online' ? 'tag-online' : 'tag-cod'}">${order.paymentMethod || 'COD'}</span>
+                        <div>
+                            <span style="background:#3b82f6; color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; margin-right:4px;">👤 ${order.rider}</span>
+                            <span class="pay-tag ${order.paymentMethod === 'Online' ? 'tag-online' : 'tag-cod'}">${order.paymentMethod || 'COD'}</span>
+                        </div>
                     </div>
                     <p style="margin:8px 0 4px 0; font-size:14px;"><strong>Pickup Store:</strong> <span style="color:#fde047;">${order.selectedStore}</span></p>
                     <p style="margin:0 0 4px 0; font-size:14px;"><strong>Customer:</strong> ${order.name} (${order.phone})</p>
@@ -75,7 +97,7 @@
     }
 
     async function markDelivered(orderId) {
-        alert(`Order #${orderId} delivered!`);
+        alert(`Order #${orderId} marked as delivered!`);
         fetchAssignedOrders();
     }
 

@@ -9,18 +9,18 @@ app.use(express.static(__dirname));
 let orders = [];
 let nextOrderId = 101;
 
-// Exact Coordinates for Karatagi Stores (Converted from Plus Codes)
+// Exact Fixed Store Coordinates for Karatagi Market Area
 const STORES = {
-    "R mart": { lat: 15.5998, lng: 76.7188, address: "JM45+VM Karatagi, Karnataka" },
-    "VA mart": { lat: 15.6010, lng: 76.7196, address: "JM55+9R Karatagi, Karnataka" },
-    "Dodla milk products": { lat: 15.5992, lng: 76.7185, address: "JM45+PM Gangavathi/Karatagi, Karnataka" },
-    "Jan Bakery": { lat: 15.6012, lng: 76.7201, address: "JM56+F25 Karatagi, Karnataka" },
-    "Sneha book house": { lat: 15.5991, lng: 76.7184, address: "JM45+MP Karatagi, Karnataka" }
+    "R mart": { lat: 15.6570, lng: 76.8090 },
+    "VA mart": { lat: 15.6582, lng: 76.8095 },
+    "Dodla milk products": { lat: 15.6568, lng: 76.8088 },
+    "Jan Bakery": { lat: 15.6585, lng: 76.8100 },
+    "Sneha book house": { lat: 15.6565, lng: 76.8085 }
 };
 
 // Calculate Haversine distance in KM
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5;
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 1.3;
     const R = 6371; // Earth radius in KM
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -50,8 +50,8 @@ app.post('/api/customer/order', (req, res) => {
         phone: req.body.phone,
         items: req.body.items,
         address: req.body.address,
-        paymentMethod: req.body.paymentMethod || 'COD', // 'COD' or 'Online'
-        settlementStatus: 'Unsettled', // 'Unsettled' or 'Settled'
+        paymentMethod: req.body.paymentMethod || 'COD',
+        settlementStatus: 'Unsettled',
         lat: custLat,
         lng: custLng,
         mapsUrl: mapsUrl,
