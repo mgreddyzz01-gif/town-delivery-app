@@ -18,7 +18,7 @@ const STORES = {
     "Sneha book house": { lat: 15.6565, lng: 76.8085 }
 };
 
-// Calculate Haversine distance in KM
+// Calculate Haversine distance with local town safeguard
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 1.3;
     const R = 6371; // Earth radius in KM
@@ -28,7 +28,13 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return parseFloat((R * c).toFixed(1));
+    let dist = parseFloat((R * c).toFixed(1));
+
+    // Safeguard: If phone IP/GPS drops outside Karatagi town boundary (> 3.5 KM), fix to 1.3 KM
+    if (dist > 3.5 || isNaN(dist) || dist <= 0) {
+        dist = 1.3;
+    }
+    return dist;
 }
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
@@ -80,7 +86,7 @@ app.post('/api/orders/:id/assign', (req, res) => {
         const selectedStoreName = req.body.store;
         const storeInfo = STORES[selectedStoreName] || STORES["R mart"];
         
-        // Dynamic distance calculation from selected store to customer location
+        // Recalculate distance using store coordinates and safeguard
         const distance = calculateDistance(storeInfo.lat, storeInfo.lng, order.lat, order.lng);
         const deliveryFee = Math.max(20, Math.round(20 + (distance * 10)));
         const operatorFee = Math.round(deliveryFee * 0.20);
