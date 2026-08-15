@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Place Order - Town Express</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -13,7 +12,8 @@
         .subtitle { color: #94a3b8; font-size: 13px; text-align: center; margin-bottom: 20px; }
         label { font-size: 13px; color: #94a3b8; margin-top: 14px; display: block; font-weight: 500; }
         input, select, textarea { width: 100%; padding: 12px 14px; margin-top: 6px; background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; color: #f8fafc; font-size: 15px; outline: none; }
-        textarea { resize: vertical; min-height: 80px; }
+        textarea { resize: vertical; min-height: 70px; }
+        .btn-loc { width: 100%; padding: 10px; background: #1e293b; color: #38bdf8; border: 1px dashed #38bdf8; border-radius: 10px; font-weight: 600; margin-top: 8px; cursor: pointer; }
         .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-weight: 700; margin-top: 22px; cursor: pointer; font-size: 16px; }
         .status-card { background: #0f172a; border: 1px solid #10b981; border-radius: 12px; padding: 20px; margin-top: 20px; display: none; text-align: center; }
         .status-badge { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 12px; }
@@ -23,20 +23,27 @@
 
 <div class="card">
     <h2>🛵 Town Express</h2>
-    <div class="subtitle">Fast local store deliveries right to your doorstep</div>
+    <div class="subtitle">Fast local deliveries directly to your door</div>
 
     <form id="orderForm" onsubmit="handleCustomerSubmit(event)">
         <label>Your Name *</label>
         <input type="text" id="custName" placeholder="e.g. Rahul Sharma" required>
 
-        <label>WhatsApp / Mobile Number *</label>
+        <label>WhatsApp / Phone Number *</label>
         <input type="tel" id="custPhone" placeholder="e.g. 9876543210" maxlength="10" required>
 
-        <label>Items to Buy / Delivery Details *</label>
+        <label>Items to Buy / Details *</label>
         <textarea id="custItems" placeholder="e.g. 1kg Tomatoes, 1 Milk Packet" required></textarea>
 
         <label>Delivery Address / Landmark *</label>
-        <input type="text" id="custAddress" placeholder="e.g. House #12, Main Road" required>
+        <input type="text" id="custAddress" placeholder="e.g. House #12, Near Bus Stand" required>
+
+        <label>Live Location</label>
+        <button type="button" class="btn-loc" id="locBtn" onclick="getLiveLocation()">📍 Detect My Live GPS Location</button>
+        <div id="locStatus" style="font-size:12px; color:#34d399; margin-top:4px;"></div>
+
+        <input type="hidden" id="custLat">
+        <input type="hidden" id="custLng">
 
         <label>Payment Method</label>
         <select id="custPayment">
@@ -50,12 +57,38 @@
     <div id="statusCard" class="status-card">
         <span class="status-badge">✅ Order Received!</span>
         <h3 id="assignedOrderId" style="margin: 8px 0; color: #f8fafc;">Order #101</h3>
-        <p style="font-size: 14px; color: #94a3b8; margin: 0 0 12px 0;">Our operator will contact you shortly.</p>
+        <p style="font-size: 14px; color: #94a3b8; margin: 0 0 4px 0;">Estimated Distance: <strong id="outDist" style="color:#fff;">--</strong></p>
+        <p style="font-size: 14px; color: #94a3b8; margin: 0 0 12px 0;">Delivery Fee: <strong id="outFee" style="color:#34d399;">--</strong></p>
         <button class="btn-submit" style="background: #3b82f6;" onclick="window.location.reload()">Place Another Order</button>
     </div>
 </div>
 
 <script>
+    function getLiveLocation() {
+        const status = document.getElementById('locStatus');
+        const btn = document.getElementById('locBtn');
+        if (navigator.geolocation) {
+            status.style.color = '#38bdf8';
+            status.innerText = "Fetching GPS location...";
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('custLat').value = pos.coords.latitude;
+                    document.getElementById('custLng').value = pos.coords.longitude;
+                    status.style.color = '#34d399';
+                    status.innerText = "✅ Live GPS Location Attached!";
+                    btn.style.borderColor = '#34d399';
+                    btn.innerText = "📍 GPS Location Captured";
+                },
+                (err) => {
+                    status.style.color = '#ef4444';
+                    status.innerText = "⚠️ Location permission denied or unavailable.";
+                }
+            );
+        } else {
+            status.innerText = "Geolocation not supported by browser.";
+        }
+    }
+
     async function handleCustomerSubmit(e) {
         e.preventDefault();
         const payload = {
@@ -63,6 +96,8 @@
             phone: document.getElementById('custPhone').value,
             items: document.getElementById('custItems').value,
             address: document.getElementById('custAddress').value,
+            lat: document.getElementById('custLat').value,
+            lng: document.getElementById('custLng').value,
             paymentMethod: document.getElementById('custPayment').value
         };
         const res = await fetch('/api/customer/order', {
@@ -74,6 +109,8 @@
         if (data.success) {
             document.getElementById('orderForm').style.display = 'none';
             document.getElementById('assignedOrderId').innerText = 'Order #' + data.order.id;
+            document.getElementById('outDist').innerText = data.order.distanceKm + ' KM';
+            document.getElementById('outFee').innerText = '₹' + data.order.deliveryFee;
             document.getElementById('statusCard').style.display = 'block';
         }
     }

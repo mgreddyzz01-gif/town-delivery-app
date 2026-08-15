@@ -11,12 +11,11 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .card { background: #131b2e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
         h3 { margin: 0 0 10px 0; color: #818cf8; }
-        label { font-size: 12px; color: #94a3b8; display: block; margin-top: 10px; font-weight: 600; }
-        input, select { width: 100%; padding: 10px; margin-top: 4px; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; color: #fff; font-size: 14px; }
-        .btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 700; margin-top: 14px; cursor: pointer; }
+        .btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 700; margin-top: 10px; cursor: pointer; text-align: center; text-decoration: none; display: block; }
         .btn-success { background: #10b981; }
+        .btn-maps { background: #0284c7; }
         .order-box { background: #1e293b; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-        .split-result { background: #0f172a; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 13px; line-height: 1.6; }
+        .split-card { background: #0f172a; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 13px; line-height: 1.6; border: 1px dashed #334155; }
     </style>
 </head>
 <body>
@@ -27,27 +26,9 @@
         <button onclick="fetchAssignedOrders()" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer;">🔄 Refresh</button>
     </div>
 
-    <!-- Active Orders Section -->
     <div class="card">
         <h3>📋 My Assigned Orders</h3>
         <div id="assignedOrdersList">Loading assigned orders...</div>
-    </div>
-
-    <!-- Quick Split & Settlement Calculator -->
-    <div class="card">
-        <h3>🧮 Calculate Delivery Split</h3>
-        <label>Item Bill Amount (₹)</label>
-        <input type="number" id="calcBill" placeholder="e.g. 250" oninput="calculateSplit()">
-
-        <label>Delivery Fee Charged (₹)</label>
-        <input type="number" id="calcFee" placeholder="e.g. 40" value="40" oninput="calculateSplit()">
-
-        <label>Operator Profit Share (%)</label>
-        <input type="number" id="calcCommission" placeholder="e.g. 20" value="20" oninput="calculateSplit()">
-
-        <div class="split-result" id="splitOutput">
-            Enter bill & delivery fee above to calculate payout breakdown.
-        </div>
     </div>
 </div>
 
@@ -61,7 +42,7 @@
             const activeOrders = orders.filter(o => o.status === 'Assigned' || o.status === 'Pending');
 
             if (activeOrders.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8; font-size:14px; text-align:center;">No assigned orders right now.</p>';
+                container.innerHTML = '<p style="color:#94a3b8; font-size:14px; text-align:center;">No active orders currently.</p>';
                 return;
             }
 
@@ -74,7 +55,14 @@
                     <p style="margin:8px 0 4px 0; font-size:14px;"><strong>Customer:</strong> ${order.name} (${order.phone})</p>
                     <p style="margin:0 0 4px 0; font-size:13px; color:#94a3b8;"><strong>Address:</strong> ${order.address}</p>
                     <p style="margin:0 0 8px 0; font-size:13px; color:#cbd5e1;"><strong>Items:</strong> ${order.items}</p>
-                    <p style="margin:0 0 10px 0; font-size:12px; color:#34d399;"><strong>Payment:</strong> ${order.paymentMethod}</p>
+
+                    <div class="split-card">
+                        📍 <strong>Distance:</strong> ${order.distanceKm} KM<br>
+                        💵 <strong>Collect Delivery Fee:</strong> ₹${order.deliveryFee}<br>
+                        💰 <strong>Rider Payout:</strong> ₹${order.riderPayout}
+                    </div>
+
+                    ${order.mapsUrl ? `<a href="${order.mapsUrl}" target="_blank" class="btn btn-maps">🗺️ Open Live Google Maps Location</a>` : ''}
                     <button class="btn btn-success" onclick="markDelivered(${order.id})">✅ Mark as Delivered</button>
                 </div>
             `).join('');
@@ -83,28 +71,11 @@
         }
     }
 
-    function calculateSplit() {
-        const bill = parseFloat(document.getElementById('calcBill').value) || 0;
-        const fee = parseFloat(document.getElementById('calcFee').value) || 0;
-        const commissionPct = parseFloat(document.getElementById('calcCommission').value) || 0;
-
-        const totalCollect = bill + fee;
-        const operatorShare = (fee * (commissionPct / 100));
-        const riderPayout = fee - operatorShare;
-
-        document.getElementById('splitOutput').innerHTML = `
-            <strong>Total Cash to Collect:</strong> ₹${totalCollect.toFixed(2)}<br>
-            <strong>Rider Payout (Fee):</strong> ₹${riderPayout.toFixed(2)}<br>
-            <strong>Operator Profit (${commissionPct}%):</strong> ₹${operatorShare.toFixed(2)}
-        `;
-    }
-
     async function markDelivered(orderId) {
-        alert(`Order #${orderId} marked as delivered!`);
+        alert(`Order #${orderId} delivered!`);
         fetchAssignedOrders();
     }
 
-    // Initial load & automatic refresh every 10 seconds
     fetchAssignedOrders();
     setInterval(fetchAssignedOrders, 10000);
 </script>
