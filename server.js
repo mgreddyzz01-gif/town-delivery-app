@@ -1,38 +1,15 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
-
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
-const DATA_FILE = path.join(__dirname, 'orders.json');
+// In-memory ledger storage
+let orders = [];
 
-// Helper to read orders
-function getOrders() {
-    if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-    }
-    try {
-        const data = fs.readFileSync(DATA_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (e) {
-        return [];
-    }
-}
-
-// Helper to save orders
-function saveOrders(orders) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(orders, null, 2));
-}
-
-const PETROL_PRICE = 113; // ₹113 / L
-const MILEAGE = 40;       // 40 km / L
-const FUEL_PER_KM = PETROL_PRICE / MILEAGE;
-
-// Web Routes
+// --- PAGES ---
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -41,88 +18,108 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// 1. Calculate & Save Order
-app.post('/api/calculate-order', (req, res) => {
-    const distanceKm = Number(req.body.distanceKm) || 0;
-    const storeBill = Number(req.body.storeBill) || 0;
-    const riderName = req.body.riderName || "Rider 1";
-    const paymentMethod = req.body.paymentMethod || "COD";
+// NEW: Serve Customer Portal Page
+app.get('/order', (req, res) => {
+    res.sendFile(path.join(__dirname, 'order.html'));
+});
 
-    let deliveryFee = 55;
-    if (distanceKm <= 2) {
-        deliveryFee = 35;
-    } else if (distanceKm <= 3) {
-        deliveryFee = 45;
-    } else {
-        deliveryFee = 45 + (distanceKm - 3) * 18; 
-    }
+// --- API ENDPOINTS ---
 
-    const roundTripKm = distanceKm * 2;
-    const fuelCost = roundTripKm * FUEL_PER_KM;
-    const remainingMargin = Math.max(deliveryFee - fuelCost, 0); 
-    
-    const riderNetPay = remainingMargin * 0.65;
-    const operatorNetProfit = remainingMargin * 0.35;
-    const totalCustomerPay = storeBill + deliveryFee;
-    
-    const now = new Date();
-    const timestamp = now.toLocaleTimeString();
-    const orderDate = now.toISOString().split('T')[0];
+// 1. New Customer Order Submission
+app.post('/api/customer/order', (req, res) => {
+    const { name, phone, items, address, paymentMethod } = req.body;
 
-    const orders = getOrders();
     const newOrder = {
         id: orders.length + 1,
-        timestamp,
-        orderDate,
-        riderName,
-        paymentMethod,
-        distanceKm,
-        storeBill,
-        deliveryFee: Math.round(deliveryFee),
-        totalCustomerPay: Math.round(totalCustomerPay),
-        fuelReimbursement: Number(fuelCost.toFixed(2)),
-        riderNetPay: Number(riderNetPay.toFixed(2)),
-        operatorNetProfit: Number(operatorNetProfit.toFixed(2)),
-        settled: 0
+        riderName: 'Unassigned',
+        customerName: name || 'Guest',
+        customerPhone: phone || '',
+        items: items || '',
+        address: address || '',
+        paymentMethod: paymentMethod || 'COD',
+        storeBill: 0,
+        distanceKm: 0,
+        deliveryFee: 0,
+        totalCustomerPay: 0,
+        fuelReimbursement: 0,
+        riderNetPay: 0,
+        operatorNetProfit: 0,
+        settled: false,
+        orderDate: new Date().toISOString().split('T')[0],
+        timestamp: new Date().toLocaleTimeString()
     };
 
     orders.push(newOrder);
-    saveOrders(orders);
-
-    res.json({ order: newOrder });
+    res.json({ success: true, order: newOrder });
 });
 
-// 2. Fetch Filtered Orders
+// 2. Rider Order Calculation Endpoint
+app.post('/api/calculate-order', (req, res) => {
+    const { storeBill, distanceKm, paymentMethod, riderName } = req.body;
+
+    const bill = parseFloat(storeBill) || 0;
+    const distance = parseFloat(distanceKm) || 0;
+
+    // Delivery Fee Logic: ₹30 base (first 3km) + ₹10/km after
+    let deliveryFee = 30;
+    if (distance > 3) {
+        deliveryFee += Math.ceil(distance - 3) * 10;
+    }
+
+    const totalCustomerPay = bill + deliveryFee;
+    const fuelReimbursement = Math.round(distance * 3 * 10) / 10; // ₹3 per km
+    const riderNetPay = 20; // Fixed payout per order
+    const operatorNetProfit = deliveryFee - (fuelReimbursement + riderNetPay);
+
+    const order = {
+        id: orders.length + 1,
+        riderName: riderName || 'Rider 1',
+        paymentMethod: paymentMethod || 'COD',
+        storeBill: bill,
+        distanceKm: distance,
+        deliveryFee: deliveryFee,
+        totalCustomerPay: totalCustomerPay,
+        fuelReimbursement: fuelReimbursement,
+        riderNetPay: riderNetPay,
+        operatorNetProfit: operatorNetProfit,
+        settled: false,
+        orderDate: new Date().toISOString().split('T')[0],
+        timestamp: new Date().toLocaleTimeString()
+    };
+
+    orders.push(order);
+    res.json({ success: true, order: order });
+});
+
+// 3. Admin Fetch Orders Endpoint
 app.get('/api/admin/orders', (req, res) => {
     const { rider, date } = req.query;
-    let orders = getOrders();
+    let filtered = [...orders];
 
     if (rider && rider !== 'ALL') {
-        orders = orders.filter(o => o.riderName === rider);
-    }
-    if (date && date !== 'ALL') {
-        const todayStr = new Date().toISOString().split('T')[0];
-        if (date === 'TODAY') {
-            orders = orders.filter(o => o.orderDate === todayStr);
-        }
+        filtered = filtered.filter(o => o.riderName === rider);
     }
 
-    res.json(orders.reverse());
+    if (date === 'TODAY') {
+        const today = new Date().toISOString().split('T')[0];
+        filtered = filtered.filter(o => o.orderDate === today);
+    }
+
+    res.json(filtered);
 });
 
-// 3. Settle Balances
+// 4. Admin Mark Settled
 app.post('/api/admin/settle', (req, res) => {
-    let orders = getOrders();
-    orders = orders.map(o => ({ ...o, settled: 1 }));
-    saveOrders(orders);
-    res.json({ message: "Settled all pending orders!" });
+    orders.forEach(o => o.settled = true);
+    res.json({ success: true });
 });
 
-// 4. Reset Data
+// 5. Admin Clear Ledger
 app.post('/api/admin/clear', (req, res) => {
-    saveOrders([]);
-    res.json({ message: "All orders cleared!" });
+    orders = [];
+    res.json({ success: true });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
