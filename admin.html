@@ -17,11 +17,24 @@
         .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
         .pending { background: rgba(234, 179, 8, 0.2); color: #fde047; }
         .assigned { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        #pinModal { background: #1e293b; padding: 30px; border-radius: 12px; text-align: center; max-width: 360px; margin: 100px auto; border: 1px solid #334155; }
+        input[type="password"] { font-size: 20px; text-align: center; letter-spacing: 4px; padding: 10px; width: 100%; margin: 16px 0; background: #0f172a; color: #fff; border: 1px solid #475569; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<div class="card">
+<!-- PIN Protection Form -->
+<div id="pinModal">
+    <h3>🔒 Admin Access Required</h3>
+    <p style="color: #94a3b8; font-size: 14px;">Enter your 4-digit Admin PIN to continue</p>
+    <form onsubmit="verifyPin(event)">
+        <input type="password" id="pinInput" placeholder="••••" maxlength="4" required autofocus>
+        <button type="submit" class="btn-assign" style="width: 100%; padding: 12px; font-size: 16px;">Login to Dashboard</button>
+    </form>
+</div>
+
+<!-- Protected Dashboard Content -->
+<div class="card" id="dashboardContent" style="display: none;">
     <h2>📊 Order Assignment & Settlement Dashboard <button onclick="loadOrders()" style="font-size:12px; padding:6px 12px; cursor:pointer;">🔄 Refresh</button></h2>
 
     <table>
@@ -34,18 +47,34 @@
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody id="ordersTable">
-            <!-- Orders dynamically load here -->
-        </tbody>
+        <tbody id="ordersTable"></tbody>
     </table>
 </div>
 
 <script>
+    function verifyPin(e) {
+        e.preventDefault();
+        const pin = document.getElementById('pinInput').value;
+        if (pin === '5910') {
+            document.getElementById('pinModal').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            loadOrders();
+        } else {
+            alert('Incorrect PIN! Access Denied.');
+            document.getElementById('pinInput').value = '';
+        }
+    }
+
     async function loadOrders() {
         const res = await fetch('/api/orders');
         const orders = await res.json();
         const tbody = document.getElementById('ordersTable');
         tbody.innerHTML = '';
+
+        if (orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">No orders submitted yet.</td></tr>';
+            return;
+        }
 
         orders.forEach(order => {
             const row = document.createElement('tr');
@@ -53,8 +82,8 @@
                 <td>#${order.id}</td>
                 <td><span class="status-badge ${order.status.toLowerCase()}">${order.status}</span></td>
                 <td>
-                    <strong>${order.name || 'Walk-in'}</strong> (${order.phone || 'N/A'})<br>
-                    <small style="color:#94a3b8">${order.items || 'General Delivery'}</small>
+                    <strong>${order.name || 'Customer'}</strong> (${order.phone || 'N/A'})<br>
+                    <small style="color:#94a3b8">${order.items || ''} — <em>${order.address || ''}</em></small>
                 </td>
                 <td>
                     <select id="rider-select-${order.id}">
@@ -81,6 +110,7 @@
         alert(`Order #${orderId} assigned to ${rider}`);
         loadOrders();
     }
-
-    loadOrders();
 </script>
+
+</body>
+</html>
