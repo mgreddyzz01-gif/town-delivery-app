@@ -3,32 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rider Delivery Portal - Town Express</title>
+    <title>Rider Delivery Portal</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #0b0f19; color: #f1f5f9; margin: 0; padding: 16px; min-height: 100vh; }
         .container { max-width: 480px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card { background: #131b2e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
-        h3 { margin: 0 0 10px 0; color: #818cf8; }
+        .card { background: #131b2e; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
         .btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 700; margin-top: 10px; cursor: pointer; text-align: center; text-decoration: none; display: block; }
         .btn-success { background: #10b981; }
         .btn-maps { background: #0284c7; }
         .order-box { background: #1e293b; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-        .split-card { background: #0f172a; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 13px; line-height: 1.6; border: 1px dashed #334155; }
+        .split-card { background: #0f172a; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 13px; line-height: 1.6; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
         <h2>🛵 Rider Portal</h2>
         <button onclick="fetchAssignedOrders()" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer;">🔄 Refresh</button>
     </div>
 
     <div class="card">
-        <h3>📋 My Assigned Orders</h3>
-        <div id="assignedOrdersList">Loading assigned orders...</div>
+        <h3>📋 Assigned Orders</h3>
+        <div id="assignedOrdersList">Loading...</div>
     </div>
 </div>
 
@@ -38,11 +36,10 @@
             const res = await fetch('/api/orders');
             const orders = await res.json();
             const container = document.getElementById('assignedOrdersList');
-            
-            const activeOrders = orders.filter(o => o.status === 'Assigned' || o.status === 'Pending');
+            const activeOrders = orders.filter(o => o.status === 'Assigned');
 
             if (activeOrders.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8; font-size:14px; text-align:center;">No active orders currently.</p>';
+                container.innerHTML = '<p style="color:#94a3b8; font-size:14px; text-align:center;">No assigned orders currently.</p>';
                 return;
             }
 
@@ -52,17 +49,18 @@
                         <strong>Order #${order.id}</strong>
                         <span style="background:#3b82f6; color:#fff; font-size:11px; padding:2px 8px; border-radius:10px;">${order.rider}</span>
                     </div>
-                    <p style="margin:8px 0 4px 0; font-size:14px;"><strong>Customer:</strong> ${order.name} (${order.phone})</p>
+                    <p style="margin:8px 0 4px 0; font-size:14px;"><strong>Pickup Store:</strong> <span style="color:#fde047;">${order.selectedStore}</span></p>
+                    <p style="margin:0 0 4px 0; font-size:14px;"><strong>Customer:</strong> ${order.name} (${order.phone})</p>
                     <p style="margin:0 0 4px 0; font-size:13px; color:#94a3b8;"><strong>Address:</strong> ${order.address}</p>
                     <p style="margin:0 0 8px 0; font-size:13px; color:#cbd5e1;"><strong>Items:</strong> ${order.items}</p>
 
                     <div class="split-card">
-                        📍 <strong>Distance:</strong> ${order.distanceKm} KM<br>
+                        📍 <strong>Distance from ${order.selectedStore}:</strong> ${order.distanceKm} KM<br>
                         💵 <strong>Collect Delivery Fee:</strong> ₹${order.deliveryFee}<br>
                         💰 <strong>Rider Payout:</strong> ₹${order.riderPayout}
                     </div>
 
-                    ${order.mapsUrl ? `<a href="${order.mapsUrl}" target="_blank" class="btn btn-maps">🗺️ Open Live Google Maps Location</a>` : ''}
+                    ${order.mapsUrl ? `<a href="${order.mapsUrl}" target="_blank" class="btn btn-maps">🗺️ Open Customer GPS Location</a>` : ''}
                     <button class="btn btn-success" onclick="markDelivered(${order.id})">✅ Mark as Delivered</button>
                 </div>
             `).join('');
