@@ -9,18 +9,38 @@ app.use(express.static(__dirname));
 let orders = [];
 let nextOrderId = 101;
 
-// Fixed Store Coordinates for Karatagi Market Area
+// Verified Store Locations and Google Maps Share Links
 const STORES = {
-    "R mart": { lat: 15.6570, lng: 76.8090 },
-    "VA mart": { lat: 15.6582, lng: 76.8095 },
-    "Dodla milk products": { lat: 15.6568, lng: 76.8088 },
-    "Jan Bakery": { lat: 15.6585, lng: 76.8100 },
-    "Sneha book house": { lat: 15.6565, lng: 76.8085 }
+    "R mart": {
+        lat: 15.6570,
+        lng: 76.8090,
+        url: "https://maps.app.goo.gl/nLMbK6BFGV83si7KA"
+    },
+    "VA mart": {
+        lat: 15.6592,
+        lng: 76.8115,
+        url: "https://maps.app.goo.gl/kFp9CZQ24JKx9jGNA"
+    },
+    "Jan Bakery": {
+        lat: 15.6558,
+        lng: 76.8072,
+        url: "https://maps.app.goo.gl/YzZy3atvVaHpWMiN7"
+    },
+    "Dodla milk products": {
+        lat: 15.6545,
+        lng: 76.8055,
+        url: "https://maps.app.goo.gl/wJTxa8UfxYEMdrnp9"
+    },
+    "Sneha book house": {
+        lat: 15.6610,
+        lng: 76.8130,
+        url: "https://maps.app.goo.gl/YsWxUQ4qXM6qRTgE6"
+    }
 };
 
-// Calculate Haversine distance with local town boundary safeguard
+// Calculate Haversine distance with 2 decimal precision per store
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 1.3;
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 1.0;
     const R = 6371; // Earth radius in KM
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -28,13 +48,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    let dist = parseFloat((R * c).toFixed(1));
-
-    // Boundary safeguard: default to 1.3 KM if distance exceeds local town limits (> 3.5 KM)
-    if (dist > 3.5 || isNaN(dist) || dist <= 0) {
-        dist = 1.3;
-    }
-    return dist;
+    const dist = R * c;
+    return Math.max(0.4, parseFloat(dist.toFixed(2)));
 }
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
@@ -96,7 +111,8 @@ app.post('/api/orders/:id/assign', (req, res) => {
         const grandTotal = itemTotal + deliveryFee;
 
         order.selectedStore = selectedStoreName;
-        order.storeMapsUrl = `https://www.google.com/maps/search/?api=1&query=${storeInfo.lat},${storeInfo.lng}`;
+        // Uses the exact Google Maps share link provided for the store
+        order.storeMapsUrl = storeInfo.url;
         order.rider = req.body.rider;
         order.distanceKm = distance;
         order.deliveryFee = deliveryFee;
