@@ -6,112 +6,135 @@
     <title>Place Order - Town Express</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #0b0f19; color: #f1f5f9; margin: 0; padding: 24px 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: #131b2e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; width: 100%; max-width: 440px; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); }
-        h2 { margin: 0 0 6px 0; color: #818cf8; text-align: center; font-size: 24px; }
-        .subtitle { color: #94a3b8; font-size: 13px; text-align: center; margin-bottom: 20px; }
-        label { font-size: 13px; color: #94a3b8; margin-top: 14px; display: block; font-weight: 500; }
-        input, select, textarea { width: 100%; padding: 12px 14px; margin-top: 6px; background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; color: #f8fafc; font-size: 15px; outline: none; }
+        body { background: #0b0f19; color: #f1f5f9; margin: 0; padding: 16px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #131b2e; border-radius: 14px; padding: 24px; width: 100%; max-width: 440px; border: 1px solid #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { margin: 0; color: #f8fafc; font-size: 24px; }
+        .header p { margin: 6px 0 0 0; color: #94a3b8; font-size: 13px; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; }
+        input, textarea, select { width: 100%; background: #0f172a; color: #fff; border: 1px solid #334155; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none; }
+        input:focus, textarea:focus, select:focus { border-color: #3b82f6; }
         textarea { resize: vertical; min-height: 70px; }
-        .btn-loc { width: 100%; padding: 10px; background: #1e293b; color: #38bdf8; border: 1px dashed #38bdf8; border-radius: 10px; font-weight: 600; margin-top: 8px; cursor: pointer; }
-        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-weight: 700; margin-top: 22px; cursor: pointer; font-size: 16px; }
-        .status-card { background: #0f172a; border: 1px solid #10b981; border-radius: 12px; padding: 20px; margin-top: 20px; display: none; text-align: center; }
-        .status-badge { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 12px; }
+        .btn { width: 100%; background: #10b981; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
+        .btn:hover { background: #059669; }
+        .location-status { font-size: 12px; padding: 8px; border-radius: 6px; margin-bottom: 14px; text-align: center; }
+        .loc-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .loc-pending { background: rgba(234, 179, 8, 0.15); color: #fde047; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🛵 Town Express</h2>
-    <div class="subtitle">Fast local deliveries directly to your door</div>
+    <div class="header">
+        <h2>🛵 Town Express</h2>
+        <p>Fast local deliveries directly to your door</p>
+    </div>
 
-    <form id="orderForm" onsubmit="handleCustomerSubmit(event)">
-        <label>Your Name *</label>
-        <input type="text" id="custName" placeholder="e.g. Rahul Sharma" required>
+    <div id="locationBanner" class="location-status loc-pending">
+        📡 Acquiring your current delivery location...
+    </div>
 
-        <label>WhatsApp / Phone Number *</label>
-        <input type="tel" id="custPhone" placeholder="e.g. 9876543210" maxlength="10" required>
+    <!-- Order Submission Form -->
+    <form id="orderForm" onsubmit="submitOrder(event)">
+        <div class="form-group">
+            <label>Your Full Name</label>
+            <input type="text" id="name" placeholder="e.g. Raj Kumar" required>
+        </div>
 
-        <label>Items to Buy / Details *</label>
-        <textarea id="custItems" placeholder="e.g. 1kg Tomatoes, 1 Milk Packet" required></textarea>
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="phone" placeholder="e.g. 9876543210" required>
+        </div>
 
-        <label>Delivery Address / Landmark *</label>
-        <input type="text" id="custAddress" placeholder="e.g. House #12, Near Bus Stand" required>
+        <div class="form-group">
+            <label>Items to Order</label>
+            <textarea id="items" placeholder="List items needed (e.g., 1kg Sugar, 1 Pack Milk)" required></textarea>
+        </div>
 
-        <label>Live Location</label>
-        <button type="button" class="btn-loc" id="locBtn" onclick="getLiveLocation()">📍 Detect My Live GPS Location</button>
-        <div id="locStatus" style="font-size:12px; color:#34d399; margin-top:4px;"></div>
+        <div class="form-group">
+            <label>Delivery Address / Landmark</label>
+            <input type="text" id="address" placeholder="e.g. Pannapur road, near bus stop" required>
+        </div>
 
-        <input type="hidden" id="custLat">
-        <input type="hidden" id="custLng">
+        <div class="form-group">
+            <label>Payment Method</label>
+            <select id="paymentMethod">
+                <option value="COD">Cash on Delivery (COD)</option>
+                <option value="Online">Online Payment</option>
+            </select>
+        </div>
 
-        <label>Payment Method</label>
-        <select id="custPayment">
-            <option value="COD">Cash on Delivery (COD)</option>
-            <option value="UPI">Pay via UPI QR on Delivery</option>
-        </select>
-
-        <button type="submit" class="btn-submit">🚀 Submit Delivery Request</button>
+        <button type="submit" class="btn">Place Order</button>
     </form>
 
-    <div id="statusCard" class="status-card">
-        <span class="status-badge">✅ Order Received!</span>
-        <h3 id="assignedOrderId" style="margin: 8px 0; color: #f8fafc;">Order #101</h3>
-        <p style="font-size: 14px; color: #94a3b8; margin: 0 0 4px 0;">Estimated Distance: <strong id="outDist" style="color:#fff;">--</strong></p>
-        <p style="font-size: 14px; color: #94a3b8; margin: 0 0 12px 0;">Delivery Fee: <strong id="outFee" style="color:#34d399;">--</strong></p>
-        <button class="btn-submit" style="background: #3b82f6;" onclick="window.location.reload()">Place Another Order</button>
+    <!-- Confirmation Screen -->
+    <div id="confirmationCard" style="display: none; text-align: center;">
+        <div style="border: 2px solid #10b981; border-radius: 12px; padding: 20px; background: rgba(16, 185, 129, 0.05);">
+            <h3 style="color: #10b981; margin-top: 0;">✅ Order Received!</h3>
+            <h2 id="displayOrderId" style="margin: 8px 0;">Order #101</h2>
+
+            <div style="background: #0f172a; border-radius: 8px; padding: 14px; margin: 16px 0; text-align: left; border: 1px solid #334155; font-size: 13px; line-height: 1.6;">
+                <p style="margin: 0 0 6px 0;">🛵 <strong>Base Delivery Fee:</strong> ₹20</p>
+                <p style="margin: 0 0 6px 0;">📍 <strong>Distance Rate:</strong> +₹10 per KM</p>
+                <p style="margin: 0; color: #94a3b8; font-size: 11px;">ℹ️ Final exact distance and total bill will be calculated when your store is assigned.</p>
+            </div>
+
+            <button onclick="location.reload()" class="btn" style="background: #0284c7;">Place Another Order</button>
+        </div>
     </div>
 </div>
 
 <script>
-    function getLiveLocation() {
-        const status = document.getElementById('locStatus');
-        const btn = document.getElementById('locBtn');
-        if (navigator.geolocation) {
-            status.style.color = '#38bdf8';
-            status.innerText = "Fetching GPS location...";
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    document.getElementById('custLat').value = pos.coords.latitude;
-                    document.getElementById('custLng').value = pos.coords.longitude;
-                    status.style.color = '#34d399';
-                    status.innerText = "✅ Live GPS Location Attached!";
-                    btn.style.borderColor = '#34d399';
-                    btn.innerText = "📍 GPS Location Captured";
-                },
-                (err) => {
-                    status.style.color = '#ef4444';
-                    status.innerText = "⚠️ Location permission denied or unavailable.";
-                }
-            );
-        } else {
-            status.innerText = "Geolocation not supported by browser.";
-        }
+    let userLat = null;
+    let userLng = null;
+
+    // Capture GPS Location on Load
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                const banner = document.getElementById('locationBanner');
+                banner.className = 'location-status loc-success';
+                banner.innerHTML = '📍 GPS Location Acquired!';
+            },
+            (err) => {
+                const banner = document.getElementById('locationBanner');
+                banner.className = 'location-status loc-pending';
+                banner.innerHTML = '⚠️ GPS unavailable. Address will be used.';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
     }
 
-    async function handleCustomerSubmit(e) {
+    async function submitOrder(e) {
         e.preventDefault();
+        
         const payload = {
-            name: document.getElementById('custName').value,
-            phone: document.getElementById('custPhone').value,
-            items: document.getElementById('custItems').value,
-            address: document.getElementById('custAddress').value,
-            lat: document.getElementById('custLat').value,
-            lng: document.getElementById('custLng').value,
-            paymentMethod: document.getElementById('custPayment').value
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            items: document.getElementById('items').value,
+            address: document.getElementById('address').value,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            lat: userLat,
+            lng: userLng
         };
+
         const res = await fetch('/api/customer/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        if (data.success) {
+
+        const result = await res.json();
+        if (result.success) {
             document.getElementById('orderForm').style.display = 'none';
-            document.getElementById('assignedOrderId').innerText = 'Order #' + data.order.id;
-            document.getElementById('outDist').innerText = data.order.distanceKm + ' KM';
-            document.getElementById('outFee').innerText = '₹' + data.order.deliveryFee;
-            document.getElementById('statusCard').style.display = 'block';
+            document.getElementById('locationBanner').style.display = 'none';
+            document.getElementById('displayOrderId').innerText = `Order #${result.order.id}`;
+            document.getElementById('confirmationCard').style.display = 'block';
+        } else {
+            alert('Failed to submit order. Please try again.');
         }
     }
 </script>

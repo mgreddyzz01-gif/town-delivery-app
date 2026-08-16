@@ -9,7 +9,7 @@ app.use(express.static(__dirname));
 let orders = [];
 let nextOrderId = 101;
 
-// Verified Store Locations with Exact Google Maps Links
+// Verified Store Locations with Exact Google Maps Share Links
 const STORES = {
     "R mart": {
         lat: 15.6570,
@@ -38,7 +38,7 @@ const STORES = {
     }
 };
 
-// Calculate realistic Road Distance (1.35x multiplier to match Google Maps driving routes)
+// Calculate estimated road distance using 1.35x route multiplier
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5;
 
@@ -50,7 +50,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     
-    // Convert direct straight-line distance to estimated driving/road distance
     const straightLineKm = R * c;
     const estimatedRoadKm = straightLineKm * 1.35;
 
