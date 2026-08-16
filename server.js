@@ -9,7 +9,7 @@ app.use(express.static(__dirname));
 let orders = [];
 let nextOrderId = 101;
 
-// Verified Store Locations with Exact Google Maps Share Links
+// Verified Store Locations with Exact Google Maps Links
 const STORES = {
     "R mart": {
         lat: 15.6570,
@@ -38,27 +38,23 @@ const STORES = {
     }
 };
 
-// Calculate Haversine distance with local town boundary safeguard
+// Calculate realistic Road Distance (1.35x multiplier to match Google Maps driving routes)
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 1.2;
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5;
 
-    const R = 6371; // Earth radius in KM
+    const R = 6371; // Earth's radius in KM
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    let dist = R * c;
+    
+    // Convert direct straight-line distance to estimated driving/road distance
+    const straightLineKm = R * c;
+    const estimatedRoadKm = straightLineKm * 1.35;
 
-    // LOCAL BOUNDARY SAFEGUARD:
-    // If distance exceeds 3.5 KM (due to testing from outside town or GPS inaccuracy),
-    // calculate a realistic local distance between 0.8 KM and 2.2 KM
-    if (dist > 3.5 || dist <= 0 || isNaN(dist)) {
-        dist = 1.2 + (Math.abs(lat1 * 1000 % 10) / 10); 
-    }
-
-    return parseFloat(dist.toFixed(2));
+    return Math.max(0.5, parseFloat(estimatedRoadKm.toFixed(1)));
 }
 
 // HTML Route Handlers
